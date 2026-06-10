@@ -9,6 +9,11 @@ export class UsersService {
     @Inject()
     private readonly prisma: PrismaService;  // Outra forma de injetar o PrismaService é usando o constructor Ex: constructor(private readonly prisma: PrismaService) {}
 
+
+    async findUser(UserWhereUniqueInput: Prisma.UserWhereUniqueInput): Promise<User | null> {
+        return this.prisma.user.findUnique({ where: UserWhereUniqueInput });
+    }
+
     async createUser(data: Prisma.UserCreateInput): Promise<User> {
         return this.prisma.user.create({ data });
     }
