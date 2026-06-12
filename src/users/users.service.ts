@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from 'src/database/prisma.service';
 import { Prisma, User } from 'src/generated/prisma/client';
+import * as argon2 from 'argon2';
 
 
 @Injectable()
@@ -13,7 +14,16 @@ export class UsersService {
     }
 
     async createUser(data: Prisma.UserCreateInput): Promise<User> {
-        return this.prisma.user.create({data});
+        const hashPassword = await argon2.hash(data.password, {
+            type: argon2.argon2id,
+            memoryCost: 19456,
+            timeCost: 2,
+            parallelism: 1
+        });
+        return this.prisma.user.create({data: {
+            ...data,
+            password: hashPassword
+        }});
     }
 
     async updateUser(params: {

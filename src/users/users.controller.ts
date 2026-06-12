@@ -6,7 +6,7 @@ import { UsersService } from './users.service';
 export class UsersController {
     constructor(private readonly usersService: UsersService)
 
- @Post('users')
+ @Post('signup')
  async signUp(@Body() userData: Prisma.UserCreateInput): Promise<UserModel> {
     return this.usersService.createUser(userData);
 
