@@ -9,7 +9,6 @@ export class UsersController {
  @Post('signup')
  async signUp(@Body() userData: Prisma.UserCreateInput): Promise<User> {
     return this.usersService.createUser(userData);
-
  }
 
  @Get(':id')
