@@ -3,12 +3,16 @@ import { UsersService } from 'src/users/users.service';
 import { Prisma, User } from 'src/generated/prisma/client';
 import { UnauthorizedException } from '@nestjs/common';
 import * as argon2 from 'argon2';
+import { JwtService } from '@nestjs/jwt';
 
 @Injectable()
 export class AuthService {
-    constructor(private readonly UserService: UsersService) {}
+    constructor(
+        private readonly UserService: UsersService,
+        private readonly jwtService: JwtService
+    ) {}
 
-    async signIn(params: Prisma.UserCreateInput): Promise<Omit<User, 'password'>> {
+    async signIn(params: Prisma.UserCreateInput): Promise<{access_token: string}> {
         const user = await this.UserService.findUser({ email: params.email });
         if (!user) {
             throw new NotFoundException('User not found');
@@ -19,8 +23,12 @@ export class AuthService {
         throw new UnauthorizedException('Invalid credentials');
     }
 
-    const { password, ...result } = user;
-    return result;
+     const payload = { sub: user.id };
+
+      return {
+      access_token: await this.jwtService.signAsync(payload)
+    };
+
 }
 
 }
