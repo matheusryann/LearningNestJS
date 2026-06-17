@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, Param, Post, Put, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Patch, Post, Put, UseGuards } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { AuthGuard } from 'src/auth/auth.guard';
 import { SafeUser, UsersService } from './users.service';
@@ -19,8 +19,8 @@ export class UsersController {
  }
 
  @UseGuards(AuthGuard)
- @Put(':id')
- async updatadeUser(@Body() userData: Prisma.UserUpdateInput, @Param('id') id: string): Promise<SafeUser> {
+ @Patch(':id')
+ async updateUser(@Body() userData: Prisma.UserUpdateInput, @Param('id') id: string): Promise<SafeUser> {
    return this.usersService.updateUser({where: {id: Number(id)}, data: userData});
 }
 
