@@ -3,6 +3,7 @@ import { AnswersService } from './answers.service';
 import { CreateAnswerDto } from './dto/create-answer.dto';
 import { UpdateAnswerDto } from './dto/update-answer.dto';
 import { AuthGuard } from 'src/auth/auth.guard';
+import { AuthenticatedRequest } from 'src/auth/interfaces/authenticated-request.interface';
 
 
 @Controller('answers')
@@ -11,7 +12,7 @@ export class AnswersController {
 
   @UseGuards(AuthGuard)
   @Post(':questionId')
-  create(@Body() createAnswerDto: CreateAnswerDto, @Request() req: any, @Param('questionId') questionId: string) {
+  create(@Body() createAnswerDto: CreateAnswerDto, @Request() req: AuthenticatedRequest, @Param('questionId') questionId: string) {
     return this.answersService.create(createAnswerDto, req.user.sub, Number(questionId));
   }
 

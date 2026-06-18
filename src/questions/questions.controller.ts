@@ -3,13 +3,14 @@ import { QuestionsService } from './questions.service';
 import { CreateQuestionDto } from './dto/create-question.dto';
 import { UpdateQuestionDto } from './dto/update-question.dto';
 import { AuthGuard } from 'src/auth/auth.guard';
+import { AuthenticatedRequest } from 'src/auth/interfaces/authenticated-request.interface';
 @Controller('questions')
 export class QuestionsController {
   constructor(private readonly questionsService: QuestionsService) {}
 
   @UseGuards(AuthGuard)
   @Post()
-  create(@Body() createQuestionDto: CreateQuestionDto, @Request() req: any) {
+  create(@Body() createQuestionDto: CreateQuestionDto, @Request() req: AuthenticatedRequest) {
     return this.questionsService.create(createQuestionDto, req.user.sub);
   }
 
