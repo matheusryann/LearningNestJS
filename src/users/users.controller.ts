@@ -1,14 +1,15 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post, Put, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Patch, Post, UseGuards } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { AuthGuard } from 'src/auth/auth.guard';
 import { SafeUser, UsersService } from './users.service';
+import { CreateUserDto } from './dto/create.user.dto';
 
 @Controller('users')
 export class UsersController {
     constructor(private readonly usersService: UsersService) {}
 
  @Post('signup')
- async signUp(@Body() userData: Prisma.UserCreateInput): Promise<SafeUser> {
+ async signUp(@Body() userData: CreateUserDto): Promise<SafeUser> {
     return this.usersService.createUser(userData);
  }
 

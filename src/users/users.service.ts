@@ -3,7 +3,6 @@ import { PrismaService } from 'src/database/prisma.service';
 import { Prisma, User } from '@prisma/client';
 import * as argon2 from 'argon2';
 
-
 export type SafeUser = Omit<User, 'password'>;
 
 @Injectable()

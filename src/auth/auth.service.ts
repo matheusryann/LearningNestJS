@@ -1,9 +1,8 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { UsersService } from 'src/users/users.service';
-import { Prisma } from '@prisma/client';
-import { UnauthorizedException } from '@nestjs/common';
 import * as argon2 from 'argon2';
 import { JwtService } from '@nestjs/jwt';
+import { SignInDto } from './dto/sign-in.dto';
 
 @Injectable()
 export class AuthService {
@@ -12,7 +11,7 @@ export class AuthService {
         private readonly jwtService: JwtService
     ) {}
 
-    async signIn(params: Prisma.UserCreateInput): Promise<{access_token: string}> {
+    async signIn(params: SignInDto): Promise<{access_token: string}> {
         const user = await this.UserService.findUserWithPassword({ email: params.email });
         if (!user) {
             throw new NotFoundException('User not found');
