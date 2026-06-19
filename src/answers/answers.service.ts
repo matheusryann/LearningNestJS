@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { CreateAnswerDto } from './dto/create-answer.dto';
 import { UpdateAnswerDto } from './dto/update-answer.dto';
 import { PrismaService } from 'src/database/prisma.service';
@@ -48,7 +48,16 @@ export class AnswersService {
 
   }
 
-  async update(id: number, updateAnswerDto: UpdateAnswerDto) {
+  async update(id: number, updateAnswerDto: UpdateAnswerDto, userId: number) {
+    const answer = await this.prisma.answers.findUnique({
+      where: {id},
+    });
+    if (!answer) {
+      throw new NotFoundException('Answer not found');
+    }
+    if (answer.userId !== userId) {
+      throw new ForbiddenException('You are not allowed to update this answer');
+    }
     try {
     return await this.prisma.answers.update({
       where: {id},
@@ -63,7 +72,16 @@ export class AnswersService {
     }
   }
 
-  async remove(id: number) {
+  async remove(id: number, userId: number) {
+    const answer = await this.prisma.answers.findUnique({
+      where: {id},
+    });
+    if (!answer) {
+      throw new NotFoundException('Answer not found');
+    }
+    if (answer.userId !== userId) {
+      throw new ForbiddenException('You are not allowed to delete this answer');
+    }
     try {
       return await this.prisma.answers.delete({
         where: {id},

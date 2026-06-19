@@ -1,4 +1,4 @@
-import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
+import { ConflictException, Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { PrismaService } from 'src/database/prisma.service';
 import { Prisma, User } from '@prisma/client';
 import * as argon2 from 'argon2';
@@ -50,9 +50,12 @@ export class UsersService {
     async updateUser(params: {
         where: Prisma.UserWhereUniqueInput;
         data: Prisma.UserUpdateInput;
-    }): Promise<SafeUser> {
+    }, userId: number): Promise<SafeUser> {
         try {
         const { where, data } = params;
+        if (where.id !== userId) {
+            throw new ForbiddenException('You are not allowed to update this user');
+        }
         const user = await this.prisma.user.update({ where, data });
         return this.toSafeUser(user);
         } catch (error) {
@@ -69,8 +72,11 @@ export class UsersService {
         }
     }
 
-    async deleteUser(where: Prisma.UserWhereUniqueInput): Promise<SafeUser> {
-        try {
+    async deleteUser(where: Prisma.UserWhereUniqueInput, userId: number): Promise<SafeUser> {
+        try { 
+            if (where.id !== userId) {
+            throw new ForbiddenException('You are not allowed to delete this user');
+        }
             const user = await this.prisma.user.delete({ where });
             return this.toSafeUser(user);
         } catch (error) {

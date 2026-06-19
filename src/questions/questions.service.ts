@@ -1,4 +1,4 @@
-import {Injectable, NotFoundException } from '@nestjs/common';
+import {Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { CreateQuestionDto } from './dto/create-question.dto';
 import { UpdateQuestionDto } from './dto/update-question.dto';
 import { PrismaService } from 'src/database/prisma.service';
@@ -38,7 +38,16 @@ export class QuestionsService {
     return question;
   }
 
- async update(id: number, updateQuestionDto: UpdateQuestionDto) {
+ async update(id: number, updateQuestionDto: UpdateQuestionDto, userId: number) {
+  const question = await this.prisma.questions.findUnique({
+    where: {id},
+  });
+  if (!question) {
+    throw new NotFoundException('Question not found');
+  }
+  if (question.userId !== userId) {
+    throw new ForbiddenException('You are not allowed to update this question');
+  }
     try {
     return await this.prisma.questions.update({
       where:{id},
@@ -53,7 +62,16 @@ export class QuestionsService {
     }
   }
 
-  async remove(id: number) {
+  async remove(id: number, userId: number) {
+    const question = await this.prisma.questions.findUnique({
+      where: {id},
+    });
+    if (!question) {
+      throw new NotFoundException('Question not found');
+    }
+    if (question.userId !== userId) {
+      throw new ForbiddenException('You are not allowed to delete this question');
+    }
     try {
     return await this.prisma.questions.delete({
       where:{id},

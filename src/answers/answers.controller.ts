@@ -30,13 +30,13 @@ export class AnswersController {
 
   @UseGuards(AuthGuard)
   @Patch(':id')
-  update(@Param('id') id: string, @Body() updateAnswerDto: UpdateAnswerDto) {
-    return this.answersService.update(+id, updateAnswerDto);
+  update(@Param('id') id: string, @Body() updateAnswerDto: UpdateAnswerDto, @Request() req: AuthenticatedRequest) {
+    return this.answersService.update(+id, updateAnswerDto, req.user.sub);
   }
 
   @UseGuards(AuthGuard)
   @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.answersService.remove(+id);
+  remove(@Param('id') id: string, @Request() req: AuthenticatedRequest) {
+    return this.answersService.remove(+id, req.user.sub);
   }
 }
