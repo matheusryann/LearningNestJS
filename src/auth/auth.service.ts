@@ -14,7 +14,7 @@ export class AuthService {
     async signIn(params: SignInDto): Promise<{access_token: string}> {
         const user = await this.UserService.findUserWithPassword({ email: params.email });
         if (!user) {
-            throw new NotFoundException('User not found');
+            throw new NotFoundException('Email or password is incorrect');
     }
 
     const passwordMatches = await argon2.verify(user.password, params.password);

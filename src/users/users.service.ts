@@ -60,6 +60,10 @@ export class UsersService {
                 error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2025'
             ) {
                 throw new NotFoundException('User not found');
+            } else if (
+                error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002'
+            ) {
+                throw new ConflictException('Email already registered');
             }
             throw error;
         }

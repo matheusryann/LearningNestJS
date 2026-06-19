@@ -7,9 +7,10 @@ import { Prisma } from '@prisma/client';
 @Injectable()
 export class AnswersService {
   constructor(private readonly prisma: PrismaService) {}
-  create(createAnswerDto: CreateAnswerDto, userId: number, questionId: number) {
+  async create(createAnswerDto: CreateAnswerDto, userId: number, questionId: number) {
     try {
-    const newAnswer = {
+    return await this.prisma.answers.create({
+      data: {
       body: createAnswerDto.body,
       user: {
         connect: {
@@ -21,10 +22,7 @@ export class AnswersService {
           id: questionId,
         },
       }
-    }
-    return this.prisma.answers.create({
-      data: newAnswer,
-    });
+    }});  
   } catch (error) {
     if (
       error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2003'
@@ -35,28 +33,24 @@ export class AnswersService {
   }
   }
 
-  findAll() {
-    return this.prisma.answers.findMany();
+  async findAll() {
+    return await this.prisma.answers.findMany();
   }
 
-  findOne(id: number) {
-    try {
-    return this.prisma.answers.findUnique({
+  async findOne(id: number) {
+    const answer = await this.prisma.answers.findUnique({
       where: {id},
     });
-    } catch (error) {
-      if (
-        error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2025'
-      ) {
-        throw new NotFoundException('Answer not found');
-      }
-      throw error;
+    if (!answer) {
+      throw new NotFoundException('Answer not found');
     }
+    return answer;
+
   }
 
-  update(id: number, updateAnswerDto: UpdateAnswerDto) {
+  async update(id: number, updateAnswerDto: UpdateAnswerDto) {
     try {
-    return this.prisma.answers.update({
+    return await this.prisma.answers.update({
       where: {id},
       data: updateAnswerDto,
     }); }
@@ -69,9 +63,9 @@ export class AnswersService {
     }
   }
 
-  remove(id: number) {
+  async remove(id: number) {
     try {
-      return this.prisma.answers.delete({
+      return await this.prisma.answers.delete({
         where: {id},
       });
     } catch (error) {
@@ -82,4 +76,4 @@ export class AnswersService {
         throw error;
       }
     }
-}
+  }
