@@ -1,5 +1,4 @@
 import { Controller, Post, Body } from '@nestjs/common';
-import { Prisma } from '@prisma/client';
 import { AuthService } from './auth.service';
 import { SignInDto } from './dto/sign-in.dto';
 

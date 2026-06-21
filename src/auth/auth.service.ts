@@ -12,7 +12,7 @@ export class AuthService {
     ) {}
 
     async signIn(params: SignInDto): Promise<{access_token: string}> {
-        const user = await this.UserService.findUserWithPassword({ email: params.email });
+        const user = await this.UserService.findUserWithPasswordByEmail(params.email);
         if (!user) {
             throw new NotFoundException('Email or password is incorrect');
     }

@@ -3,6 +3,7 @@ import { PrismaService } from 'src/database/prisma.service';
 import { Prisma, User } from '@prisma/client';
 import * as argon2 from 'argon2';
 import { CreateUserDto } from './dto/create.user.dto';
+import { UpdateUserDto } from './dto/update.user.dto';
 
 export type SafeUser = Omit<User, 'password'>;
 
@@ -10,12 +11,12 @@ export type SafeUser = Omit<User, 'password'>;
 export class UsersService {
     constructor(private readonly prisma: PrismaService) { }  // Outra forma de injetar o PrismaService é usando o decorator @Inject(), Ex: @Inject(PrismaService) private readonly prisma: PrismaService
 
-    async findUserWithPassword(where: Prisma.UserWhereUniqueInput): Promise<User | null> {
-        return this.prisma.user.findUnique({ where });
+    async findUserWithPasswordByEmail(email: string): Promise<User | null> {
+        return this.prisma.user.findUnique({ where: {email} });
     }
 
-    async findUser(where: Prisma.UserWhereUniqueInput): Promise<SafeUser> {
-        const user = await this.findUserWithPassword(where);
+    async findUser(id: number): Promise<SafeUser> {
+        const user = await this.prisma.user.findUnique({ where: {id} });
         if (!user) {
             throw new NotFoundException('User not found');
         }
@@ -48,15 +49,15 @@ export class UsersService {
     }
 
     async updateUser(params: {
-        where: Prisma.UserWhereUniqueInput;
-        data: Prisma.UserUpdateInput;
+        id: number;
+        data: UpdateUserDto;
     }, userId: number): Promise<SafeUser> {
-        try {
-        const { where, data } = params;
-        if (where.id !== userId) {
+        if (params.id !== userId) {
             throw new ForbiddenException('You are not allowed to update this user');
         }
-        const user = await this.prisma.user.update({ where, data });
+        try {
+        const { id, data } = params;
+        const user = await this.prisma.user.update({ where: {id}, data });
         return this.toSafeUser(user);
         } catch (error) {
             if (
@@ -72,12 +73,12 @@ export class UsersService {
         }
     }
 
-    async deleteUser(where: Prisma.UserWhereUniqueInput, userId: number): Promise<SafeUser> {
-        try { 
-            if (where.id !== userId) {
+    async deleteUser(id: number, userId: number): Promise<SafeUser> {
+        if (id !== userId) {
             throw new ForbiddenException('You are not allowed to delete this user');
         }
-            const user = await this.prisma.user.delete({ where });
+        try { 
+            const user = await this.prisma.user.delete({ where: {id} });
             return this.toSafeUser(user);
         } catch (error) {
             if (

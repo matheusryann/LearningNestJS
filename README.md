@@ -15,6 +15,7 @@ API REST de perguntas e respostas construída com **NestJS**, **Prisma** e **SQL
 - [Variáveis de ambiente](#variáveis-de-ambiente)
 - [Autenticação](#autenticação)
 - [Autorização (dono do recurso)](#autorização-dono-do-recurso)
+- [DTOs vs tipos Prisma](#dtos-vs-tipos-prisma)
 - [Endpoints da API](#endpoints-da-api)
 - [Validação de entrada](#validação-de-entrada)
 - [Tratamento de erros](#tratamento-de-erros)
@@ -67,7 +68,7 @@ src/
 │   ├── interfaces/         # AuthenticatedRequest
 │   └── types/              # JwtPayload
 ├── users/                  # Cadastro e CRUD de usuários
-│   └── dto/                # CreateUserDto
+│   └── dto/                # CreateUserDto, UpdateUserDto
 ├── questions/              # CRUD de perguntas
 │   └── dto/
 ├── answers/                # CRUD de respostas
@@ -256,6 +257,38 @@ Autenticação responde **"quem é você?"**. Autorização responde **"você po
 
 ---
 
+## DTOs vs tipos Prisma
+
+O projeto separa **contrato da API** (DTO) de **formato do banco** (Prisma).
+
+| Camada | Tipos usados |
+|--------|--------------|
+| **Controller** | DTOs + `ParseIntPipe` nos params — sem import de `@prisma/client` |
+| **Service (parâmetros)** | DTOs, `number`, `string` |
+| **Service (interno)** | Prisma nas chamadas `this.prisma...` e no `catch` de erros |
+
+### Users — padrão refatorado
+
+| Método service | Entrada |
+|----------------|---------|
+| `createUser` | `CreateUserDto` |
+| `findUser` | `id: number` |
+| `findUserWithPasswordByEmail` | `email: string` (uso interno pelo login) |
+| `updateUser` | `id`, `UpdateUserDto`, `userId` |
+| `deleteUser` | `id`, `userId` |
+
+Retorno público de usuário: `SafeUser` (`Omit<User, 'password'>`).
+
+### `ParseIntPipe`
+
+Params de rota como `:id` usam `@Param('id', ParseIntPipe) id: number` em vez de `Number(id)` ou `+id`. ID inválido (`/users/abc`) retorna **400** automaticamente.
+
+### Update de perfil sem senha
+
+`UpdateUserDto` usa `PartialType(OmitType(CreateUserDto, ['password']))` — no PATCH só `name` e/ou `email`. Troca de senha será uma rota separada (planejado).
+
+---
+
 ## Endpoints da API
 
 Legenda: 🔓 público · 🔒 requer JWT · ✏️ só o dono (PATCH/DELETE)
@@ -324,6 +357,14 @@ Exemplo: `Senha123#`
 | `email` | email válido |
 | `password` | string, obrigatório |
 
+### Update user (`UpdateUserDto`)
+
+| Campo | Regras |
+|-------|--------|
+| `name` | string, opcional |
+| `email` | email válido, opcional |
+| `password` | **não permitido** — use rota de troca de senha (futuro) |
+
 ### Create question (`CreateQuestionDto`)
 
 | Campo | Regras |
@@ -345,7 +386,7 @@ Exceptions usadas nos **services**:
 
 | Exception | HTTP | Quando |
 |-----------|------|--------|
-| `BadRequestException` | 400 | DTO inválido (ValidationPipe) |
+| `BadRequestException` | 400 | DTO inválido / param não numérico (`ParseIntPipe`) |
 | `UnauthorizedException` | 401 | Token inválido / credenciais incorretas |
 | `ForbiddenException` | 403 | Logado, mas não é dono do recurso |
 | `NotFoundException` | 404 | Recurso não encontrado |
@@ -410,6 +451,7 @@ Content-Type: application/json
 | Bob edita pergunta da Alice | TOKEN_B | 403 |
 | Bob apaga resposta da Alice | TOKEN_B | 403 |
 | Bob edita perfil da Alice (`PATCH /users/1`) | TOKEN_B | 403 |
+| PATCH com `password` no body | TOKEN_A | 400 |
 | Alice edita própria pergunta | TOKEN_A | 200 |
 | Alice apaga própria resposta | TOKEN_A | 200 |
 
@@ -453,7 +495,7 @@ Content-Type: application/json
 | **Controller** | Rotas HTTP |
 | **Service** | Regras de negócio, autorização, Prisma |
 | **DTO** | Contrato e validação de entrada |
-| **Pipe** | `ValidationPipe` global |
+| **Pipe** | `ValidationPipe` global, `ParseIntPipe` em route params |
 | **Guard** | `AuthGuard` — autenticação JWT |
 | **Autorização** | Checagem de dono nos services (`ForbiddenException`) |
 | **DI** | Services injetados via constructor |

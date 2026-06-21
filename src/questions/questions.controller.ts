@@ -23,18 +23,18 @@ export class QuestionsController {
   @UseGuards(AuthGuard)
   @Get(':id')
   findOne(@Param('id', ParseIntPipe) id: number) {
-    return this.questionsService.findOne(+id);
+    return this.questionsService.findOne(id);
   }
 
   @UseGuards(AuthGuard)
   @Patch(':id')
   update(@Param('id', ParseIntPipe) id: number, @Body() updateQuestionDto: UpdateQuestionDto, @Request() req: AuthenticatedRequest) {
-    return this.questionsService.update(+id, updateQuestionDto, req.user.sub);
+    return this.questionsService.update(id, updateQuestionDto, req.user.sub);
   }
 
   @UseGuards(AuthGuard)
   @Delete(':id')
   remove(@Param('id', ParseIntPipe) id: number, @Request() req: AuthenticatedRequest) {
-    return this.questionsService.remove(+id, req.user.sub);
+    return this.questionsService.remove(id, req.user.sub);
   }
 }
