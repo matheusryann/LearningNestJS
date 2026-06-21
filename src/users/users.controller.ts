@@ -2,9 +2,10 @@ import { Body, Controller, Delete, Get, Param, ParseIntPipe, Patch, Post, Reques
 import { AuthGuard } from 'src/auth/auth.guard';
 import { SafeUser, UsersService } from './users.service';
 import { CreateUserDto } from './dto/create.user.dto';
-
 import { AuthenticatedRequest } from 'src/auth/interfaces/authenticated-request.interface';
 import { UpdateUserDto } from './dto/update.user.dto';
+import { ChangePasswordDto } from 'src/auth/dto/change-password.dto';
+import { MessageResponse } from 'src/common/types/message-response.type';
 
 @Controller('users')
 export class UsersController {
@@ -13,6 +14,12 @@ export class UsersController {
  @Post('signup')
  async signUp(@Body() userData: CreateUserDto): Promise<SafeUser> {
     return this.usersService.createUser(userData);
+ }
+
+ @UseGuards(AuthGuard)
+ @Patch('change-password')
+ async changePassword(@Body() dto: ChangePasswordDto, @Request() req: AuthenticatedRequest): Promise<MessageResponse> {
+   return this.usersService.changePassword(dto, req.user.sub);
  }
 
  @UseGuards(AuthGuard)

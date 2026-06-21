@@ -1,9 +1,12 @@
-import { ConflictException, Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
+import { ConflictException, Injectable, NotFoundException, ForbiddenException, UnauthorizedException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from 'src/database/prisma.service';
 import { Prisma, User } from '@prisma/client';
 import * as argon2 from 'argon2';
 import { CreateUserDto } from './dto/create.user.dto';
 import { UpdateUserDto } from './dto/update.user.dto';
+import { ChangePasswordDto } from 'src/auth/dto/change-password.dto';
+import { MessageResponse } from 'src/common/types/message-response.type';
+import { hashPassword } from 'src/common/utils/password.util';  // Função para hashear a senha
 
 export type SafeUser = Omit<User, 'password'>;
 
@@ -25,18 +28,8 @@ export class UsersService {
 
     async createUser(data: CreateUserDto): Promise<SafeUser> {
         try {
-            const hashPassword = await argon2.hash(data.password, {
-                type: argon2.argon2id,
-                memoryCost: 19456,
-                timeCost: 2,
-                parallelism: 1
-            });
-            const user = await this.prisma.user.create({
-                data: {
-                    ...data,
-                    password: hashPassword
-                }
-            });
+            const hashedPassword = await hashPassword(data.password);
+            const user = await this.prisma.user.create({ data: { ...data, password: hashedPassword } });
             return this.toSafeUser(user);
         } catch (error) {
             if (
@@ -80,6 +73,39 @@ export class UsersService {
         try { 
             const user = await this.prisma.user.delete({ where: {id} });
             return this.toSafeUser(user);
+        } catch (error) {
+            if (
+                error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2025'
+            ) {
+                throw new NotFoundException('User not found');
+            }
+            throw error;
+        }
+    }
+
+    async changePassword(dto: ChangePasswordDto, userId: number): Promise<MessageResponse> {
+        const user = await this.prisma.user.findUnique({ where: { id: userId } });
+        if (!user) {
+            throw new NotFoundException('User not found');
+        }
+
+        const isPasswordValid = await argon2.verify(user.password, dto.currentPassword);
+        if (!isPasswordValid) {
+            throw new UnauthorizedException('Invalid current password');
+        }
+
+        if (dto.newPassword === dto.currentPassword) {
+            throw new BadRequestException('New password cannot be the same as the current password');
+        }
+
+        const hashedNewPassword = await hashPassword(dto.newPassword);
+
+        try {
+            await this.prisma.user.update({
+                where: { id: userId },
+                data: { password: hashedNewPassword },
+            });
+            return { message: 'Password changed successfully' };
         } catch (error) {
             if (
                 error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2025'
