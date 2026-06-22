@@ -25,13 +25,36 @@ export class QuestionsService {
   }
 
   async findAll() {
-    return await this.prisma.questions.findMany();
+    return await this.prisma.questions.findMany({
+      include: {
+        answers: true,
+        user: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
+      }
+    });
   }
 
   async findOne(id: number) {
     const question = await this.prisma.questions.findUnique({
       where: {id},
+      include: {
+        answers: {
+          include: {
+            user: {
+              select: {
+                id: true,
+                name: true,
+              },
+            }
+          }
+        }
+      }
     });
+
     if (!question) {
       throw new NotFoundException('Question not found');
     }
